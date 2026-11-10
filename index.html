@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2f1e9">
+  <title>声のアーカイブ</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;600;700;900&display=swap');
+
+    :root {
+      color-scheme: light;
+      --paper: #f2f1e9;
+      --ink: #172a26;
+      --muted: #737e74;
+      --line: #d7d9ce;
+      --green: #1b6552;
+      --lime: #d5ef66;
+      --orange: #e7784b;
+      --mono: 'DM Mono', monospace;
+      --sans: 'Zen Kaku Gothic New', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--sans);
+      background:
+        radial-gradient(ellipse at 86% 9%, rgba(213, 239, 102, .3), transparent 25rem),
+        radial-gradient(ellipse at 7% 92%, rgba(231, 120, 75, .12), transparent 27rem),
+        var(--paper);
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 64px));
+      margin: 0 auto;
+    }
+
+    header {
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--green);
+      display: grid;
+      place-items: center;
+      color: var(--lime);
+      font-size: 14px;
+    }
+
+    .header-meta, .eyebrow, .track-index, .time, .count {
+      font: 11px var(--mono);
+      letter-spacing: 0;
+    }
+
+    .header-meta { color: var(--muted); }
+
+    main { padding: 54px 0 64px; }
+
+    .intro {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      text-transform: uppercase;
+      margin: 0 0 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.16;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .intro-note {
+      max-width: 230px;
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 370px;
+      align-items: start;
+      gap: 54px;
+    }
+
+    .list-head {
+      height: 44px;
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 56px;
+      align-items: center;
+      border-bottom: 1px solid var(--ink);
+      color: var(--muted);
+    }
+
+    .list-head .count { justify-self: end; }
+
+    .track-row {
+      min-height: 82px;
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr) 56px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: background .2s ease, padding .2s ease;
+    }
+
+    .track-row:hover, .track-row.is-active {
+      padding: 0 12px;
+      background: rgba(255, 255, 255, .48);
+    }
+
+    .track-index { color: var(--muted); }
+    .track-name { overflow: hidden; }
+    .track-name strong {
+      display: block;
+      overflow: hidden;
+      font-size: 15px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .track-name span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font: 10px var(--mono);
+    }
+
+    .track-duration {
+      justify-self: end;
+      color: var(--muted);
+      font: 11px var(--mono);
+    }
+
+    .player {
+      overflow: hidden;
+      position: sticky;
+      top: 24px;
+      color: #f5f4ec;
+      background: var(--green);
+      border-radius: 4px;
+      box-shadow: 0 18px 45px rgba(23, 42, 38, .13);
+    }
+
+    .player-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 22px 0;
+      color: rgba(245, 244, 236, .68);
+      font: 10px var(--mono);
+    }
+
+    .live-mark { display: flex; align-items: center; gap: 7px; }
+    .live-mark::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--lime);
+    }
+
+    .art {
+      height: 205px;
+      margin: 20px 22px 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, transparent 49.8%, rgba(23, 42, 38, .16) 50%, transparent 50.4%),
+        linear-gradient(45deg, transparent 49.8%, rgba(23, 42, 38, .12) 50%, transparent 50.4%),
+        var(--lime);
+    }
+
+    .wave {
+      height: 108px;
+      width: min(270px, 86%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .wave i {
+      display: block;
+      width: 3px;
+      height: var(--h);
+      background: var(--green);
+      border-radius: 2px;
+      transform: scaleY(.55);
+      transition: transform .25s ease;
+    }
+
+    .player.is-playing .wave i { animation: pulse 800ms ease-in-out infinite alternate; animation-delay: var(--d); }
+    @keyframes pulse { to { transform: scaleY(1); } }
+
+    .now-playing { padding: 22px 22px 0; }
+    .now-playing h2 {
+      overflow: hidden;
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .now-playing p { margin: 5px 0 0; color: rgba(245, 244, 236, .65); font: 10px var(--mono); }
+
+    .timeline { padding: 20px 22px 0; }
+    .range {
+      width: 100%;
+      height: 3px;
+      margin: 0;
+      display: block;
+      appearance: none;
+      background: rgba(245, 244, 236, .28);
+      cursor: pointer;
+    }
+
+    .range::-webkit-slider-thumb {
+      width: 10px;
+      height: 10px;
+      appearance: none;
+      border-radius: 50%;
+      background: var(--lime);
+    }
+
+    .range::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--lime); }
+    .time-row { display: flex; justify-content: space-between; margin-top: 9px; color: rgba(245, 244, 236, .67); font: 10px var(--mono); }
+
+    .controls {
+      height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+    }
+
+    .icon-button {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .icon-button:hover { color: var(--lime); }
+    .play-button {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      color: var(--green);
+      background: var(--lime);
+      font-size: 18px;
+      transition: transform .18s ease;
+    }
+
+    .play-button:hover { color: var(--green); transform: scale(1.06); }
+
+    .volume-row {
+      height: 50px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid rgba(245, 244, 236, .18);
+      color: rgba(245, 244, 236, .72);
+      font: 12px var(--mono);
+    }
+
+    .volume-row .range { width: 92px; }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      padding: 18px 0 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 10px var(--mono);
+    }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 36px, 560px); }
+      header { height: 68px; }
+      main { padding: 38px 0 44px; }
+      .intro { align-items: start; flex-direction: column; gap: 12px; margin-bottom: 27px; }
+      .intro-note { max-width: 100%; }
+      .layout { grid-template-columns: 1fr; gap: 32px; }
+      .player { position: static; grid-row: 1; }
+      .art { height: 180px; }
+      .track-row { min-height: 72px; }
+      footer { margin-top: 38px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◖</span>声のアーカイブ</div>
+      <div class="header-meta">PERSONAL AUDIO LIBRARY</div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">LISTENING ROOM / 001</p>
+          <h1 id="page-title">声を、聴く。</h1>
+        </div>
+        <p class="intro-note">お気に入りの音声を、ここから再生できます。</p>
+      </section>
+
+      <div class="layout">
+        <section class="library" aria-label="音声一覧">
+          <div class="list-head"><span class="eyebrow">COLLECTION</span><span></span><span class="count">04 TRACKS</span></div>
+          <div id="track-list"></div>
+        </section>
+
+        <section class="player" id="player" aria-label="音声プレイヤー">
+          <div class="player-top"><span class="live-mark">NOW PLAYING</span><span>MP3 / STEREO</span></div>
+          <div class="art" aria-hidden="true"><div class="wave" id="wave"></div></div>
+          <div class="now-playing"><h2 id="current-title">音声を選んでください</h2><p id="current-file">YOUR AUDIO COLLECTION</p></div>
+          <div class="timeline">
+            <input class="range" id="seek" type="range" min="0" max="1000" value="0" aria-label="再生位置">
+            <div class="time-row"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
+          </div>
+          <div class="controls">
+            <button class="icon-button" id="previous" type="button" aria-label="前の音声">|◀</button>
+            <button class="icon-button play-button" id="toggle" type="button" aria-label="再生">▶</button>
+            <button class="icon-button" id="next" type="button" aria-label="次の音声">▶|</button>
+          </div>
+          <div class="volume-row"><span aria-hidden="true">♪</span><input class="range" id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="音量"><span>VOL</span></div>
+        </section>
+      </div>
+      <audio id="audio" preload="metadata"></audio>
+    </main>
+
+    <footer><span>声のアーカイブ</span><span id="footer-count">4 AUDIO FILES</span></footer>
+  </div>
+
+  <script>
+    const tracks = [
+      { title: '音声 01', file: 'cartesia-speech.mp3' },
+      { title: '音声 02', file: 'cartesia-speech (2).mp3' },
+      { title: '音声 03', file: 'cartesia-speech (3).mp3' },
+      { title: '音声 04', file: 'cartesia-speech (4).mp3' },
+    ];
+    const audio = document.querySelector('#audio');
+    const player = document.querySelector('#player');
+    const list = document.querySelector('#track-list');
+    const seek = document.querySelector('#seek');
+    const toggle = document.querySelector('#toggle');
+    let activeIndex = -1;
+    let seeking = false;
+
+    const formatTime = (seconds) => {
+      if (!Number.isFinite(seconds)) return '0:00';
+      const minutes = Math.floor(seconds / 60);
+      const remainder = Math.floor(seconds % 60).toString().padStart(2, '0');
+      return `${minutes}:${remainder}`;
+    };
+
+    const renderList = () => {
+      list.innerHTML = tracks.map((track, index) => `
+        <div class="track-row" data-index="${index}" role="button" tabindex="0" aria-label="${track.title}を再生">
+          <span class="track-index">0${index + 1}</span>
+          <span class="track-name"><strong>${track.title}</strong><span>${track.file}</span></span>
+          <span class="track-duration" id="length-${index}">--:--</span>
+        </div>`).join('');
+    };
+
+    const makeWave = () => {
+      const wave = document.querySelector('#wave');
+      for (let index = 0; index < 56; index += 1) {
+        const bar = document.createElement('i');
+        const height = 15 + Math.abs(Math.sin(index * 0.39) * 70) + Math.abs(Math.cos(index * 0.17) * 20);
+        bar.style.setProperty('--h', `${Math.min(height, 100)}%`);
+        bar.style.setProperty('--d', `${(index % 12) * -65}ms`);
+        wave.append(bar);
+      }
+    };
+
+    const setTrack = (index, shouldPlay = true) => {
+      activeIndex = (index + tracks.length) % tracks.length;
+      const track = tracks[activeIndex];
+      audio.src = `audio/${encodeURIComponent(track.file)}`;
+      document.querySelector('#current-title').textContent = track.title;
+      document.querySelector('#current-file').textContent = track.file;
+      document.querySelectorAll('.track-row').forEach((row, rowIndex) => {
+        row.classList.toggle('is-active', rowIndex === activeIndex);
+        row.setAttribute('aria-current', rowIndex === activeIndex ? 'true' : 'false');
+      });
+      seek.value = 0;
+      document.querySelector('#elapsed').textContent = '0:00';
+      document.querySelector('#duration').textContent = '0:00';
+      if (shouldPlay) audio.play().catch(() => updatePlaying(false));
+    };
+
+    const updatePlaying = (isPlaying) => {
+      player.classList.toggle('is-playing', isPlaying);
+      toggle.textContent = isPlaying ? 'Ⅱ' : '▶';
+      toggle.setAttribute('aria-label', isPlaying ? '一時停止' : '再生');
+    };
+
+    renderList();
+    makeWave();
+
+    list.addEventListener('click', (event) => {
+      const row = event.target.closest('.track-row');
+      if (row) setTrack(Number(row.dataset.index));
+    });
+    list.addEventListener('keydown', (event) => {
+      const row = event.target.closest('.track-row');
+      if (row && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        setTrack(Number(row.dataset.index));
+      }
+    });
+    toggle.addEventListener('click', () => {
+      if (activeIndex < 0) return setTrack(0);
+      if (audio.paused) audio.play().catch(() => updatePlaying(false));
+      else audio.pause();
+    });
+    document.querySelector('#previous').addEventListener('click', () => setTrack(activeIndex <= 0 ? 0 : activeIndex - 1));
+    document.querySelector('#next').addEventListener('click', () => setTrack(activeIndex < 0 ? 0 : activeIndex + 1));
+    document.querySelector('#volume').addEventListener('input', (event) => { audio.volume = Number(event.target.value); });
+    audio.volume = 0.8;
+    audio.addEventListener('loadedmetadata', () => {
+      document.querySelector('#duration').textContent = formatTime(audio.duration);
+      if (activeIndex >= 0) document.querySelector(`#length-${activeIndex}`).textContent = formatTime(audio.duration);
+    });
+    audio.addEventListener('timeupdate', () => {
+      if (!seeking && Number.isFinite(audio.duration)) seek.value = String((audio.currentTime / audio.duration) * 1000);
+      document.querySelector('#elapsed').textContent = formatTime(audio.currentTime);
+    });
+    seek.addEventListener('input', () => {
+      seeking = true;
+      if (Number.isFinite(audio.duration)) document.querySelector('#elapsed').textContent = formatTime((Number(seek.value) / 1000) * audio.duration);
+    });
+    seek.addEventListener('change', () => {
+      if (Number.isFinite(audio.duration)) audio.currentTime = (Number(seek.value) / 1000) * audio.duration;
+      seeking = false;
+    });
+    audio.addEventListener('play', () => updatePlaying(true));
+    audio.addEventListener('pause', () => updatePlaying(false));
+    audio.addEventListener('ended', () => setTrack(activeIndex + 1));
+  </script>
+</body>
+</html>
