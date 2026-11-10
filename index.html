@@ -332,6 +332,28 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
+
+    body { background: var(--paper); }
+    .shell { width: min(680px, calc(100% - 32px)); }
+    header, .intro .eyebrow, .intro-note, .list-head, .player, footer { display: none; }
+    main { padding: 32px 0; }
+    .intro { margin-bottom: 20px; }
+    h1 { font-size: 24px; }
+    .layout { display: block; }
+    .track-row {
+      width: 100%;
+      min-height: 46px;
+      padding: 0 12px;
+      grid-template-columns: minmax(0, 1fr);
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      text-align: left;
+    }
+    .track-row:hover, .track-row.is-active { padding: 0 12px; background: rgba(27, 101, 82, .08); }
+    .track-index, .track-name span, .track-duration { display: none; }
+    .track-name strong { font-size: 15px; font-weight: 500; }
+    audio { display: block; width: 100%; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -345,7 +367,7 @@
       <section class="intro" aria-labelledby="page-title">
         <div>
           <p class="eyebrow">LISTENING ROOM / 001</p>
-          <h1 id="page-title">声を、聴く。</h1>
+          <h1 id="page-title">地震・突風・洪水</h1>
         </div>
         <p class="intro-note">お気に入りの音声を、ここから再生できます。</p>
       </section>
@@ -372,7 +394,7 @@
           <div class="volume-row"><span aria-hidden="true">♪</span><input class="range" id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="音量"><span>VOL</span></div>
         </section>
       </div>
-      <audio id="audio" preload="metadata"></audio>
+      <audio id="audio" controls preload="metadata" aria-label="音声再生"></audio>
     </main>
 
     <footer><span>声のアーカイブ</span><span id="footer-count">4 AUDIO FILES</span></footer>
@@ -380,110 +402,46 @@
 
   <script>
     const tracks = [
-      { title: '音声 01', file: 'cartesia-speech.mp3' },
-      { title: '音声 02', file: 'cartesia-speech (2).mp3' },
-      { title: '音声 03', file: 'cartesia-speech (3).mp3' },
-      { title: '音声 04', file: 'cartesia-speech (4).mp3' },
+      { title: '日本語 地震', file: 'cartesia-speech (5).mp3' },
+      { title: '日本語 突風', file: 'cartesia-speech (6).mp3' },
+      { title: '日本語 洪水', file: 'cartesia-speech (7).mp3' },
+      { title: 'English Earthquake', file: 'cartesia-speech (8).mp3' },
+      { title: 'English Gust', file: 'cartesia-speech (9).mp3' },
+      { title: 'English Flood', file: 'cartesia-speech (10).mp3' },
+      { title: '中文 地震', file: 'cartesia-speech (11).mp3' },
+      { title: '中文 阵风', file: 'cartesia-speech (12).mp3' },
+      { title: '中文 洪水', file: 'cartesia-speech (13).mp3' },
+      { title: '한국어 지진', file: 'cartesia-speech (14).mp3' },
+      { title: '한국어 돌풍', file: 'cartesia-speech (15).mp3' },
+      { title: '한국어 홍수', file: 'cartesia-speech (16).mp3' },
     ];
     const audio = document.querySelector('#audio');
-    const player = document.querySelector('#player');
     const list = document.querySelector('#track-list');
-    const seek = document.querySelector('#seek');
-    const toggle = document.querySelector('#toggle');
     let activeIndex = -1;
-    let seeking = false;
-
-    const formatTime = (seconds) => {
-      if (!Number.isFinite(seconds)) return '0:00';
-      const minutes = Math.floor(seconds / 60);
-      const remainder = Math.floor(seconds % 60).toString().padStart(2, '0');
-      return `${minutes}:${remainder}`;
-    };
 
     const renderList = () => {
       list.innerHTML = tracks.map((track, index) => `
-        <div class="track-row" data-index="${index}" role="button" tabindex="0" aria-label="${track.title}を再生">
-          <span class="track-index">0${index + 1}</span>
-          <span class="track-name"><strong>${track.title}</strong><span>${track.file}</span></span>
-          <span class="track-duration" id="length-${index}">--:--</span>
-        </div>`).join('');
+        <button class="track-row" type="button" data-index="${index}" aria-label="${track.title}を選択">
+          <span class="track-name"><strong>${track.title}</strong></span>
+        </button>`).join('');
     };
 
-    const makeWave = () => {
-      const wave = document.querySelector('#wave');
-      for (let index = 0; index < 56; index += 1) {
-        const bar = document.createElement('i');
-        const height = 15 + Math.abs(Math.sin(index * 0.39) * 70) + Math.abs(Math.cos(index * 0.17) * 20);
-        bar.style.setProperty('--h', `${Math.min(height, 100)}%`);
-        bar.style.setProperty('--d', `${(index % 12) * -65}ms`);
-        wave.append(bar);
-      }
-    };
-
-    const setTrack = (index, shouldPlay = true) => {
-      activeIndex = (index + tracks.length) % tracks.length;
-      const track = tracks[activeIndex];
-      audio.src = `audio/${encodeURIComponent(track.file)}`;
-      document.querySelector('#current-title').textContent = track.title;
-      document.querySelector('#current-file').textContent = track.file;
+    const setTrack = (index) => {
+      activeIndex = index;
+      audio.src = `audio/${encodeURIComponent(tracks[index].file)}`;
+      audio.play().catch(() => {});
       document.querySelectorAll('.track-row').forEach((row, rowIndex) => {
         row.classList.toggle('is-active', rowIndex === activeIndex);
         row.setAttribute('aria-current', rowIndex === activeIndex ? 'true' : 'false');
       });
-      seek.value = 0;
-      document.querySelector('#elapsed').textContent = '0:00';
-      document.querySelector('#duration').textContent = '0:00';
-      if (shouldPlay) audio.play().catch(() => updatePlaying(false));
-    };
-
-    const updatePlaying = (isPlaying) => {
-      player.classList.toggle('is-playing', isPlaying);
-      toggle.textContent = isPlaying ? 'Ⅱ' : '▶';
-      toggle.setAttribute('aria-label', isPlaying ? '一時停止' : '再生');
     };
 
     renderList();
-    makeWave();
 
     list.addEventListener('click', (event) => {
       const row = event.target.closest('.track-row');
       if (row) setTrack(Number(row.dataset.index));
     });
-    list.addEventListener('keydown', (event) => {
-      const row = event.target.closest('.track-row');
-      if (row && (event.key === 'Enter' || event.key === ' ')) {
-        event.preventDefault();
-        setTrack(Number(row.dataset.index));
-      }
-    });
-    toggle.addEventListener('click', () => {
-      if (activeIndex < 0) return setTrack(0);
-      if (audio.paused) audio.play().catch(() => updatePlaying(false));
-      else audio.pause();
-    });
-    document.querySelector('#previous').addEventListener('click', () => setTrack(activeIndex <= 0 ? 0 : activeIndex - 1));
-    document.querySelector('#next').addEventListener('click', () => setTrack(activeIndex < 0 ? 0 : activeIndex + 1));
-    document.querySelector('#volume').addEventListener('input', (event) => { audio.volume = Number(event.target.value); });
-    audio.volume = 0.8;
-    audio.addEventListener('loadedmetadata', () => {
-      document.querySelector('#duration').textContent = formatTime(audio.duration);
-      if (activeIndex >= 0) document.querySelector(`#length-${activeIndex}`).textContent = formatTime(audio.duration);
-    });
-    audio.addEventListener('timeupdate', () => {
-      if (!seeking && Number.isFinite(audio.duration)) seek.value = String((audio.currentTime / audio.duration) * 1000);
-      document.querySelector('#elapsed').textContent = formatTime(audio.currentTime);
-    });
-    seek.addEventListener('input', () => {
-      seeking = true;
-      if (Number.isFinite(audio.duration)) document.querySelector('#elapsed').textContent = formatTime((Number(seek.value) / 1000) * audio.duration);
-    });
-    seek.addEventListener('change', () => {
-      if (Number.isFinite(audio.duration)) audio.currentTime = (Number(seek.value) / 1000) * audio.duration;
-      seeking = false;
-    });
-    audio.addEventListener('play', () => updatePlaying(true));
-    audio.addEventListener('pause', () => updatePlaying(false));
-    audio.addEventListener('ended', () => setTrack(activeIndex + 1));
   </script>
 </body>
 </html>
